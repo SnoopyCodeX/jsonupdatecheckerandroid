@@ -20,5 +20,6 @@ android {
 }
 
 dependencies {
+	compile project(':cdph_updatechecker_lib')
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }
