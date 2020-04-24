@@ -8,8 +8,8 @@ android {
         applicationId "com.cdph.app"
         minSdkVersion 14
         targetSdkVersion 21
-        versionCode 1
-        versionName "1.0"
+        versionCode 21
+        versionName "21.1.0 - alpha8"
     }
     buildTypes {
         release {

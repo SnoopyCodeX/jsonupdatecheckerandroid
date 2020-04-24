@@ -18,19 +18,26 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Environment;
 import android.widget.Toast;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.net.URLConnection;
+import java.util.Objects;
+
+import com.cdph.app.json.JSONReader;
 
 public final class UpdateChecker
 {
 	private static OnUpdateDetectedListener listener;
 	private static String updateLogUrl = "";
 	private static boolean autoRun = false, autoInstall = false;
+	private static JSONReader jsonReader;
 	private static Context ctx;
 	
 	/*
@@ -63,7 +70,7 @@ public final class UpdateChecker
 	*@param	  autoRun
 	*@return  UpdateChecker.class
 	*/
-	public UpdateChecker shouldRunWhenConnected(boolean autoRun)
+	public UpdateChecker shouldAutoRun(boolean autoRun)
 	{
 		this.autoRun = autoRun;
 		
@@ -114,6 +121,18 @@ public final class UpdateChecker
 	}
 	
 	/*
+	* Sets a custom json reader to suit your needs
+	*
+	*@param  jsonReader
+	*@return UpdateChecker.class
+	*/
+	public <T extends JSONReader> UpdateChecker setJsonReader(T jsonReader)
+	{
+		this.jsonReader = jsonReader;
+		return this;
+	}
+	
+	/*
 	* Runs the update checker
 	*
 	*@return null
@@ -153,6 +172,29 @@ public final class UpdateChecker
 		}
 	}
 	
+	/*
+	* Downloads the file from the url
+	*
+	*@param  url         - The download url
+	*@return file        - The downloaded file
+	*/
+	public File downloadUpdate(String url)
+	{
+		File file = null;
+		
+		if(!ConnectivityReceiver.isConnected(ctx))
+			return file;
+		
+		try {
+			TaskDownloadUpdate down = new TaskDownloadUpdate();
+			file = down.execute(url).get();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		return file;
+	}
+	
 	public static interface OnUpdateDetectedListener
 	{
 		public void onUpdateDetected(NewUpdateInfo info, boolean autoInstall)
@@ -186,9 +228,13 @@ public final class UpdateChecker
 		{
 			super.onPreExecute();
 			
+			if(jsonReader == null)
+				jsonReader = new JSONReader();
+			
 			dlg = new ProgressDialog(ctx);
 			dlg.setCancelable(false);
 			dlg.setCanceledOnTouchOutside(false);
+			dlg.setProgressDrawable(ctx.getResources().getDrawable(android.R.drawable.progress_horizontal));
 			dlg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 			dlg.setMessage("Checking for new update...");
 			dlg.show();
@@ -221,20 +267,8 @@ public final class UpdateChecker
 						json += new String(buffer, 0, len);
 					is.close();
 					
-					//Parse as jsonObject then get the values
-					JSONObject job = new JSONObject(json);
-					int versionCode = job.getInt(Config.KEY_VERSION_CODE);
-					String versionName = job.getString(Config.KEY_VERSION_NAME);
-					String downloadUrl = job.getString(Config.KEY_DOWNLOAD_URL);
-					String description = "";
-					
-					//Parse 'description' as jsonArray then get the values
-					JSONArray jar = job.getJSONArray(Config.KEY_DESCRIPTION);
-					for(int i = 0; i < jar.length(); i++)
-						description += jar.getString(i) + "\n";	
-					description = description.substring(0, description.length()-1);
-					
-					info = new NewUpdateInfo(downloadUrl, versionName, description, versionCode);
+					//Read json
+					info = jsonReader.readJson(json);
 				}
 				
 				conn.disconnect();
@@ -280,6 +314,80 @@ public final class UpdateChecker
 		}
 	}
 	
+	private static final class TaskDownloadUpdate extends AsyncTask<String, Void, File>
+	{
+		private ProgressDialog dlg;
+		
+		@Override
+		protected void onPreExecute()
+		{
+			super.onPreExecute();
+			
+			dlg = new ProgressDialog(ctx);
+			dlg.setCancelable(false);
+			dlg.setCanceledOnTouchOutside(false);
+			dlg.setProgressDrawable(ctx.getResources().getDrawable(android.R.drawable.progress_horizontal));
+			dlg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+			dlg.setMessage("Downloading update...");
+			dlg.show();
+		}
+		
+		@Override
+		protected File doInBackground(String[] params)
+		{
+			File file = null;
+			
+			try {
+				String str_url = params[0];
+				String str_dir = "/Android/.temp";
+				
+				File downDir = new File(Environment.getExternalStorageDirectory(), str_dir);
+				File downApk = new File(downDir, "/update.apk");
+				
+				if(downApk.exists())
+					downApk.delete();
+				
+				if(downDir.exists())
+					downDir.delete();
+				
+				downDir.mkdir();
+				downApk.createNewFile();
+				
+				URL url = new URL(str_url);
+				URLConnection conn = url.openConnection();
+				int len = conn.getContentLength();
+				
+				DataInputStream dis = new DataInputStream(url.openStream());
+				byte[] buffer = new byte[len];
+				dis.readFully(buffer);
+				dis.close();
+				
+				if(buffer.length > 0)
+				{
+					FileOutputStream fos = ctx.openFileOutput(downApk.getAbsolutePath(), Context.MODE_PRIVATE);
+					fos.write(buffer);
+					fos.flush();
+					fos.close();
+					
+					file = downApk;
+				}
+			} catch(Exception e) {
+				e.printStackTrace();
+			}
+			
+			return file;
+		}
+
+		@Override
+		protected void onPostExecute(File result)
+		{
+			super.onPostExecute(result);
+			
+			if(dlg != null)
+				dlg.dismiss();
+		}
+	}
+	
 	private static final class ConnectivityReceiver extends BroadcastReceiver
 	{
 		@Override
@@ -294,13 +402,5 @@ public final class UpdateChecker
 			ConnectivityManager cm = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
 			return (cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().getType() == ConnectivityManager.TYPE_WIFI && cm.getActiveNetworkInfo().isConnected());
 		}
-	}
-	
-	private class Config
-	{
-		public static final String KEY_VERSION_CODE = "versionCode";
-		public static final String KEY_VERSION_NAME = "versionName";
-		public static final String KEY_DOWNLOAD_URL = "url";
-		public static final String KEY_DESCRIPTION = "description";
 	}
 }
