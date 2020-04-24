@@ -222,6 +222,7 @@ public final class UpdateChecker
 		private static final int READ_TIMEOUT = 3000;
 		
 		private ProgressDialog dlg;
+		private String errMsg;
 		
 		@Override
 		protected void onPreExecute()
@@ -246,7 +247,7 @@ public final class UpdateChecker
 			NewUpdateInfo info = null;
 			
 			try {
-				String str_url = sanitizeUrl(params[0]);
+				String str_url = params[0];
 				URL url = new URL(str_url);
 				
 				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -274,6 +275,7 @@ public final class UpdateChecker
 				conn.disconnect();
 			} catch(Exception e) {
 				e.printStackTrace();
+				errMsg += e.getMessage();
 			}
 			
 			return info;
@@ -288,29 +290,15 @@ public final class UpdateChecker
 				if(dlg != null)
 					dlg.dismiss();
 				
-				if(listener != null)
+				if(listener != null && errMsg == null)
 					if(ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0).versionCode < result.app_version)
 						listener.onUpdateDetected(result, autoInstall);
+				else
+					Toast.makeText(ctx, errMsg, Toast.LENGTH_LONG).show();
 			} catch(Exception e) {
 				e.printStackTrace();
 				Toast.makeText(ctx, e.getMessage(), Toast.LENGTH_LONG).show();
 			}
-		}
-		
-		private String sanitizeUrl(String url)
-		{
-			String sanitized = url;
-			
-			if(url.contains("//"))
-			{
-				String[] params = url.split("//");
-				if(!params[0].equals("http:") || !params[0].equals("https:"))
-					sanitized = "https://" + url;
-			}
-			else
-				sanitized = "https://" + url;
-			
-			return sanitized;
 		}
 	}
 	

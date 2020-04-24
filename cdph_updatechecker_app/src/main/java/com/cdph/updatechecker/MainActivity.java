@@ -18,7 +18,7 @@ public class MainActivity extends Activity
         setContentView(R.layout.main);
 		
 		UpdateChecker.getInstance(this)
-			.setUpdateLogsUrl("https://pastebin.com/raw/SFpLs0De")
+			.setUpdateLogsUrl("https://pastebin.com/raw/e3q1h4iQ")
 			.shouldAutoRun(true)
 			.shouldAutoInstall(true)
 			.setJsonReader(new MyCustomJsonReader())
