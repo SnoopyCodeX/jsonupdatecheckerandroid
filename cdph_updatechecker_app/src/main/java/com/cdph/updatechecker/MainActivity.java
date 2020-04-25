@@ -41,7 +41,7 @@ public class MainActivity extends Activity
 						public void onClick(DialogInterface di, int btn)
 						{
 							dlg.dismiss();
-							UpdateChecker.downloadUpdate("https://github.com/SnoopyCodeX/jsonupdatecheckerandroid/raw/master/updatedapp/cdph_updatechecker_app.apk", "cdph_updatechecker_app.apk");
+							UpdateChecker.downloadUpdate("https://github.com/SnoopyCodeX/binarymatrixandroid/raw/master/binarymatrix_lwp/app/build/bin/app.apk", "cdph_updatechecker_app.apk");
 						}
 					});
 					dlg.show();

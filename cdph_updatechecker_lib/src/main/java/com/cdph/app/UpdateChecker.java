@@ -155,11 +155,10 @@ public final class UpdateChecker
 	*@param	  filePath  - The path of the apk to be installed
 	*@return  null
 	*/
-	public static void installApp(String path)
+	public static void installApp(String path, String mimeType)
 	{
 		try {
-			File file = new File(path);
-			Uri uri = Uri.fromFile(file);
+			Uri uri = Uri.parse("file://" + path);
 			
 			Intent promptInstall = new Intent(Intent.ACTION_VIEW);
 			promptInstall.setDataAndType(uri, "application/vnd.android.package-archive");
@@ -303,7 +302,7 @@ public final class UpdateChecker
 	private static final class TaskDownloadUpdate extends AsyncTask<String, Void, File>
 	{
 		private ProgressDialog dlg;
-		private String errMsg;
+		private String errMsg, mimeType;
 		
 		@Override
 		protected void onPreExecute()
@@ -330,6 +329,10 @@ public final class UpdateChecker
 				String str_url = params[0];
 				String str_tag = params[1];
 				
+				File dest = new File(Environment.DIRECTORY_DOWNLOADS, str_tag);
+				if(dest.exists())
+					dest.delete();
+				
 				DownloadManager.Request request = new DownloadManager.Request(Uri.parse(str_url));
 				request.setTitle("Downloading update");
 				request.setDescription("Please wait...");
@@ -347,19 +350,18 @@ public final class UpdateChecker
 					Cursor cursor = dm.query(query);
 					cursor.moveToFirst();
 					
-					int bits_downloaded = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
-					int bits_totalSize = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
-					
 					int status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
 					if(status == DownloadManager.STATUS_SUCCESSFUL)
 					{
 						String filePath = cursor.getString(cursor.getColumnIndex("local_uri"));
 						file = new File(filePath);
+						
+						mimeType = dm.getMimeTypeForDownloadedFile(id);
+						if(autoInstall && errMsg == null)
+							installApp(filePath, mimeType);
+						
 						downloading = false;
 					}
-					
-					int percent = (bits_downloaded / bits_totalSize) * 100;
-					dlg.setProgress(percent);
 					
 					cursor.close();
 				}
