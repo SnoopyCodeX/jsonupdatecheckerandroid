@@ -210,7 +210,7 @@ public final class UpdateChecker
 	
 	public static interface OnUpdateDetectedListener
 	{
-		public void onUpdateDetected(NewUpdateInfo info, boolean autoInstall)
+		public void onUpdateDetected(NewUpdateInfo info)
 	}
 	
 	public static class NewUpdateInfo
@@ -302,7 +302,7 @@ public final class UpdateChecker
 				
 				if(listener != null && errMsg == null)
 					if(ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0).versionCode < result.app_version)
-						listener.onUpdateDetected(result, autoInstall);
+						listener.onUpdateDetected(result);
 					else
 						Toast.makeText(ctx, "You have the latest version!", Toast.LENGTH_LONG).show();
 				else

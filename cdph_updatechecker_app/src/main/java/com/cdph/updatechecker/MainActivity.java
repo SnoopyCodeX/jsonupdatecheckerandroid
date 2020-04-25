@@ -24,7 +24,7 @@ public class MainActivity extends Activity
 			.setJsonReader(new MyCustomJsonReader())
 			.setOnUpdateDetectedListener(new UpdateChecker.OnUpdateDetectedListener() {
 				@Override
-				public void onUpdateDetected(final UpdateChecker.NewUpdateInfo info, boolean autoInstall)
+				public void onUpdateDetected(final UpdateChecker.NewUpdateInfo info)
 				{
 					final AlertDialog dlg = new AlertDialog.Builder(MainActivity.this).create();
 					
