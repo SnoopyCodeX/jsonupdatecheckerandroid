@@ -35,7 +35,7 @@ public final class UpdateChecker
 {
 	private static OnUpdateDetectedListener listener;
 	private static String updateLogUrl = "";
-	private static boolean autoRun = false, autoInstall = false;
+	private static boolean autoRun = false, autoInstall = false, updateOnWifiOnly = true;
 	private static JSONReader jsonReader;
 	private static Context ctx;
 	
@@ -103,6 +103,19 @@ public final class UpdateChecker
 	public UpdateChecker shouldAutoInstall(boolean autoInstall)
 	{
 		this.autoInstall = autoInstall;
+		return this;
+	}
+	
+	/*
+	* When set to false, this will also allow
+	* updating using mobile data.
+	*
+	*@param  wifiOnly  - If will only check for updates if connected on wifi network
+	*@return UpdateChecker.class
+	*/
+	public UpdateChecker shouldCheckUpdateOnWifiOnly(boolean wifiOnly)
+	{
+		this.updateOnWifiOnly = wifiOnly;
 		return this;
 	}
 	
@@ -290,8 +303,10 @@ public final class UpdateChecker
 				if(listener != null && errMsg == null)
 					if(ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0).versionCode < result.app_version)
 						listener.onUpdateDetected(result, autoInstall);
+					else
+						Toast.makeText(ctx, "You have the latest version!", Toast.LENGTH_LONG).show();
 				else
-						Toast.makeText(ctx, String.format("[ERROR]: %s", errMsg), Toast.LENGTH_LONG).show();
+					Toast.makeText(ctx, String.format("[ERROR]: %s", errMsg), Toast.LENGTH_LONG).show();
 			} catch(Exception e) {
 				e.printStackTrace();
 				Toast.makeText(ctx, String.format("[ERROR (task_updatechecker)]: %s", e.getMessage()), Toast.LENGTH_LONG).show();
@@ -398,7 +413,14 @@ public final class UpdateChecker
 		public static final boolean isConnected(Context ctx)
 		{
 			ConnectivityManager cm = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
-			return (cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().getType() == ConnectivityManager.TYPE_WIFI && cm.getActiveNetworkInfo().isConnected());
+			
+			if(updateOnWifiOnly)
+				if(cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().getType() != ConnectivityManager.TYPE_WIFI)
+					return false;
+				else
+					return (cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().getType() == ConnectivityManager.TYPE_WIFI && cm.getActiveNetworkInfo().isConnected());
+			else
+				return (cm.getActiveNetworkInfo() != null && (cm.getActiveNetworkInfo().getType() == ConnectivityManager.TYPE_MOBILE || cm.getActiveNetworkInfo().getType() == ConnectivityManager.TYPE_WIFI) && cm.getActiveNetworkInfo().isConnected());
 		}
 	}
 }
