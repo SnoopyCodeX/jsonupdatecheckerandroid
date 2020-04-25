@@ -7,7 +7,6 @@ import org.json.*;
 import com.cdph.app.UpdateChecker;
 import com.cdph.app.UpdateChecker.NewUpdateInfo;
 import com.cdph.app.json.JSONReader;
-import com.cdph.app.util.Config;
 
 public class MainActivity extends Activity 
 {
@@ -48,13 +47,13 @@ public class MainActivity extends Activity
 		{
 			//Parse as jsonObject then get the values
 			JSONObject job = new JSONObject(json);
-			int versionCode = job.getInt(Config.KEY_VERSION_CODE);
-			String versionName = job.getString(Config.KEY_VERSION_NAME);
-			String downloadUrl = job.getString(Config.KEY_DOWNLOAD_URL);
+			int versionCode = job.getInt("versionCode");
+			String versionName = job.getString("versionName");
+			String downloadUrl = job.getString("url");
 			String description = "";
 
 			//Parse 'description' as jsonArray then get the values
-			JSONArray jar = job.getJSONArray(Config.KEY_DESCRIPTION);
+			JSONArray jar = job.getJSONArray("description");
 			for(int i = 0; i < jar.length(); i++)
 				description += jar.getString(i) + "\n";	
 			description = description.substring(0, description.length()-1);

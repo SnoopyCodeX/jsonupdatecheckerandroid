@@ -67,7 +67,7 @@ public final class UpdateChecker
 	* new updates when connected to the internet.
 	* Default is false.
 	*
-	*@param	  autoRun
+	*@param	  autoRun             - Default is false
 	*@return  UpdateChecker.class
 	*/
 	public UpdateChecker shouldAutoRun(boolean autoRun)
@@ -84,7 +84,7 @@ public final class UpdateChecker
 	* The url where the new info of the app
 	* will be read to.
 	*
-	*@param   updateLogsUrl
+	*@param   updateLogsUrl       - The url of the json-encoded info of the new update
 	*@return  UpdateChecker.class
 	*/
 	public UpdateChecker setUpdateLogsUrl(String updateLogsUrl)
@@ -98,7 +98,7 @@ public final class UpdateChecker
 	* install the new app after it has been
 	* downloaded.
 	*
-	*@param   autoInstall
+	*@param   autoInstall         - Default is false
 	*@return  UpdateChecker.class
 	*/
 	public UpdateChecker shouldAutoInstall(boolean autoInstall)
@@ -111,7 +111,7 @@ public final class UpdateChecker
 	* Sets an OnUpdateDetectedListener, when a new update
 	* is detected, this listener will be triggered.
 	*
-	*@param   listener
+	*@param   listener            - The listener to be triggered
 	*@return  UpdateChecker.class
 	*/
 	public UpdateChecker setOnUpdateDetectedListener(UpdateChecker.OnUpdateDetectedListener listener)
@@ -123,7 +123,7 @@ public final class UpdateChecker
 	/*
 	* Sets a custom json reader to suit your needs
 	*
-	*@param  jsonReader
+	*@param  jsonReader           - A custom class that extends {com.cdph.app.json.JSONReader}
 	*@return UpdateChecker.class
 	*/
 	public <T extends JSONReader> UpdateChecker setJsonReader(T jsonReader)
@@ -153,7 +153,7 @@ public final class UpdateChecker
 	/*
 	* Installs the application
 	*
-	*@param	  filePath
+	*@param	  filePath  - The path of the apk to be installed
 	*@return  null
 	*/
 	public void installApp(String path)
@@ -190,6 +190,7 @@ public final class UpdateChecker
 			file = down.execute(url).get();
 		} catch(Exception e) {
 			e.printStackTrace();
+			Toast.makeText(ctx, String.format("[ERROR]: %s", e.getMessage()), Toast.LENGTH_LONG).show();
 		}
 		
 		return file;
@@ -228,9 +229,6 @@ public final class UpdateChecker
 		protected void onPreExecute()
 		{
 			super.onPreExecute();
-			
-			if(jsonReader == null)
-				jsonReader = new JSONReader();
 			
 			dlg = new ProgressDialog(ctx);
 			dlg.setCancelable(false);
@@ -294,10 +292,10 @@ public final class UpdateChecker
 					if(ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0).versionCode < result.app_version)
 						listener.onUpdateDetected(result, autoInstall);
 				else
-					Toast.makeText(ctx, errMsg, Toast.LENGTH_LONG).show();
+						Toast.makeText(ctx, String.format("[ERROR]: %s", errMsg), Toast.LENGTH_LONG).show();
 			} catch(Exception e) {
 				e.printStackTrace();
-				Toast.makeText(ctx, e.getMessage(), Toast.LENGTH_LONG).show();
+				Toast.makeText(ctx, String.format("[ERROR]: %s", e.getMessage()), Toast.LENGTH_LONG).show();
 			}
 		}
 	}
@@ -305,6 +303,7 @@ public final class UpdateChecker
 	private static final class TaskDownloadUpdate extends AsyncTask<String, Void, File>
 	{
 		private ProgressDialog dlg;
+		private String errMsg;
 		
 		@Override
 		protected void onPreExecute()
@@ -361,6 +360,7 @@ public final class UpdateChecker
 				}
 			} catch(Exception e) {
 				e.printStackTrace();
+				errMsg += e.getMessage();
 			}
 			
 			return file;
@@ -373,6 +373,9 @@ public final class UpdateChecker
 			
 			if(dlg != null)
 				dlg.dismiss();
+				
+			if(errMsg != null)
+				Toast.makeText(ctx, String.format("[ERROR]: %s", errMsg), Toast.LENGTH_LONG).show();
 		}
 	}
 	
