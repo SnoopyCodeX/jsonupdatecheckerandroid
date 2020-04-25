@@ -38,8 +38,6 @@ public class MainActivity extends Activity
 					dlg.show();
 				}
 			});
-			
-			
     }
 	
 	private class MyCustomJsonReader extends JSONReader
