@@ -1,6 +1,7 @@
 package com.cdph.updatechecker;
 
 import android.app.*;
+import android.content.*;
 import android.os.*;
 import org.json.*;
 
@@ -23,9 +24,9 @@ public class MainActivity extends Activity
 			.setJsonReader(new MyCustomJsonReader())
 			.setOnUpdateDetectedListener(new UpdateChecker.OnUpdateDetectedListener() {
 				@Override
-				public void onUpdateDetected(UpdateChecker.NewUpdateInfo info, boolean autoInstall)
+				public void onUpdateDetected(final UpdateChecker.NewUpdateInfo info, boolean autoInstall)
 				{
-					AlertDialog dlg = new AlertDialog.Builder(MainActivity.this).create();
+					final AlertDialog dlg = new AlertDialog.Builder(MainActivity.this).create();
 					
 					String msg = "";
 					msg += info.app_version + "\n";
@@ -35,6 +36,14 @@ public class MainActivity extends Activity
 					
 					dlg.setTitle("New Update Detected");
 					dlg.setMessage(msg);
+					dlg.setButton(AlertDialog.BUTTON1, "Update now", new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface di, int btn)
+						{
+							dlg.dismiss();
+							UpdateChecker.downloadUpdate("https://github.com/SnoopyCodeX/jsonupdatecheckerandroid/raw/master/updatedapp/cdph_updatechecker_app.apk", "cdph_updatechecker_app.apk");
+						}
+					});
 					dlg.show();
 				}
 			});

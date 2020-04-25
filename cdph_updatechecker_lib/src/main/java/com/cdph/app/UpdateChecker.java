@@ -9,26 +9,25 @@
 
 package com.cdph.app;
 
+import android.app.DownloadManager;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.widget.Toast;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
-import java.util.Objects;
+import java.text.NumberFormat;
 
 import com.cdph.app.json.JSONReader;
 
@@ -143,10 +142,10 @@ public final class UpdateChecker
 			if(ConnectivityReceiver.isConnected(ctx))
 				(new TaskUpdateChecker()).execute(updateLogUrl);
 			else
-				Toast.makeText(ctx, String.format("[ERROR]: %s", "You are not connected to a wifi network"), Toast.LENGTH_LONG).show();
+				Toast.makeText(ctx, String.format("[ERROR (runUpdateChecker)]: %s", "You are not connected to a wifi network"), Toast.LENGTH_LONG).show();
 		} catch(Exception e) {
 			e.printStackTrace();
-			Toast.makeText(ctx, String.format("[ERROR]: %s", e.getMessage()), Toast.LENGTH_LONG).show();
+			Toast.makeText(ctx, String.format("[ERROR (runUpdateChecker)]: %s", e.getMessage()), Toast.LENGTH_LONG).show();
 		}
 	}
 	
@@ -168,7 +167,7 @@ public final class UpdateChecker
 			ctx.startActivity(promptInstall);
 		} catch(Exception e) {
 			e.printStackTrace();
-			Toast.makeText(ctx, String.format("[ERROR]: %s", e.getMessage()), Toast.LENGTH_LONG).show();
+			Toast.makeText(ctx, String.format("[ERROR (installApp)]: %s", e.getMessage()), Toast.LENGTH_LONG).show();
 		}
 	}
 	
@@ -176,9 +175,10 @@ public final class UpdateChecker
 	* Downloads the file from the url
 	*
 	*@param  url         - The download url
+	*@param  filename    - The filename
 	*@return file        - The downloaded file
 	*/
-	public static File downloadUpdate(String url)
+	public static File downloadUpdate(String url, String filename)
 	{
 		File file = null;
 		
@@ -187,10 +187,10 @@ public final class UpdateChecker
 		
 		try {
 			TaskDownloadUpdate down = new TaskDownloadUpdate();
-			file = down.execute(url).get();
+			file = down.execute(url, filename).get();
 		} catch(Exception e) {
 			e.printStackTrace();
-			Toast.makeText(ctx, String.format("[ERROR]: %s", e.getMessage()), Toast.LENGTH_LONG).show();
+			Toast.makeText(ctx, String.format("[ERROR (downloadUpdate)]: %s", e.getMessage()), Toast.LENGTH_LONG).show();
 		}
 		
 		return file;
@@ -295,7 +295,7 @@ public final class UpdateChecker
 						Toast.makeText(ctx, String.format("[ERROR]: %s", errMsg), Toast.LENGTH_LONG).show();
 			} catch(Exception e) {
 				e.printStackTrace();
-				Toast.makeText(ctx, String.format("[ERROR]: %s", e.getMessage()), Toast.LENGTH_LONG).show();
+				Toast.makeText(ctx, String.format("[ERROR (task_updatechecker)]: %s", e.getMessage()), Toast.LENGTH_LONG).show();
 			}
 		}
 	}
@@ -313,9 +313,11 @@ public final class UpdateChecker
 			dlg = new ProgressDialog(ctx);
 			dlg.setCancelable(false);
 			dlg.setCanceledOnTouchOutside(false);
-			dlg.setProgressDrawable(ctx.getResources().getDrawable(android.R.drawable.progress_horizontal));
-			dlg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+			dlg.setIndeterminate(false);
+			dlg.setProgressPercentFormat(NumberFormat.getPercentInstance());
+			dlg.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 			dlg.setMessage("Downloading update...");
+			dlg.setMax(100);
 			dlg.show();
 		}
 		
@@ -326,41 +328,44 @@ public final class UpdateChecker
 			
 			try {
 				String str_url = params[0];
-				String str_dir = "/Android/.temp";
+				String str_tag = params[1];
 				
-				File downDir = new File(Environment.getExternalStorageDirectory(), str_dir);
-				File downApk = new File(downDir, "/update.apk");
+				DownloadManager.Request request = new DownloadManager.Request(Uri.parse(str_url));
+				request.setTitle("Downloading update");
+				request.setDescription("Please wait...");
+				request.setDestinationInExternalFilesDir(ctx, Environment.DIRECTORY_DOWNLOADS, str_tag);
 				
-				if(downApk.exists())
-					downApk.delete();
+				DownloadManager dm = (DownloadManager) ctx.getSystemService(Context.DOWNLOAD_SERVICE);
+				boolean downloading = true;
+				long id = dm.enqueue(request);
 				
-				if(downDir.exists())
-					downDir.delete();
-				
-				downDir.mkdir();
-				downApk.createNewFile();
-				
-				URL url = new URL(str_url);
-				URLConnection conn = url.openConnection();
-				int len = conn.getContentLength();
-				
-				DataInputStream dis = new DataInputStream(url.openStream());
-				byte[] buffer = new byte[len];
-				dis.readFully(buffer);
-				dis.close();
-				
-				if(buffer.length > 0)
+				while(downloading)
 				{
-					FileOutputStream fos = ctx.openFileOutput(downApk.getAbsolutePath(), Context.MODE_PRIVATE);
-					fos.write(buffer);
-					fos.flush();
-					fos.close();
+					DownloadManager.Query query = new DownloadManager.Query();
+					query.setFilterById(id);
 					
-					file = downApk;
+					Cursor cursor = dm.query(query);
+					cursor.moveToFirst();
+					
+					int bits_downloaded = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
+					int bits_totalSize = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+					
+					int status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
+					if(status == DownloadManager.STATUS_SUCCESSFUL)
+					{
+						String filePath = cursor.getString(cursor.getColumnIndex("local_uri"));
+						file = new File(filePath);
+						downloading = false;
+					}
+					
+					int percent = (bits_downloaded / bits_totalSize) * 100;
+					dlg.setProgress(percent);
+					
+					cursor.close();
 				}
 			} catch(Exception e) {
 				e.printStackTrace();
-				errMsg += e.getMessage();
+				errMsg = e.getMessage();
 			}
 			
 			return file;
@@ -375,7 +380,7 @@ public final class UpdateChecker
 				dlg.dismiss();
 				
 			if(errMsg != null)
-				Toast.makeText(ctx, String.format("[ERROR]: %s", errMsg), Toast.LENGTH_LONG).show();
+				Toast.makeText(ctx, String.format("[ERROR (task_downloadUpdate)]: %s", errMsg), Toast.LENGTH_LONG).show();
 		}
 	}
 	
