@@ -156,7 +156,7 @@ public final class UpdateChecker
 	*@param	  filePath  - The path of the apk to be installed
 	*@return  null
 	*/
-	public void installApp(String path)
+	public static void installApp(String path)
 	{
 		try {
 			File file = new File(path);
@@ -178,7 +178,7 @@ public final class UpdateChecker
 	*@param  url         - The download url
 	*@return file        - The downloaded file
 	*/
-	public File downloadUpdate(String url)
+	public static File downloadUpdate(String url)
 	{
 		File file = null;
 		
