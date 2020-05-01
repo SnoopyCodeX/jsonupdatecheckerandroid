@@ -82,3 +82,5 @@ checker.setOnUpdateDetectedListener(new UpdateChecker.OnUpdateDetectedListener()
 });
 ```
 ---
+#Support
+> (Paypal)['https://paypal.me/snoopycodex21']
