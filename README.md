@@ -1,4 +1,5 @@
-# JSON-based Update Checker
+### JSON-based Update Checker
+[![DepShield Badge](https://depshield.sonatype.org/badges/SnoopyCodeX/repository/depshield.svg)](https://depshield.github.io)
 
 > ☑ Customizeable
 ---
