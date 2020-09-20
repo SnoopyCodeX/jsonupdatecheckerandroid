@@ -1,6 +1,6 @@
 # JSON-based Update Checker
 [![DepShield Badge](https://depshield.sonatype.org/badges/SnoopyCodeX/jsonupdatecheckerandroid/depshield.svg)](https://depshield.github.io)
----
+
 - [x] Customizeable
 - [x] Easy to implement
 - [x] JSON-based checker
@@ -8,7 +8,7 @@
 - [x] Can auto install app
 - [x] Automatically check for updates
 - [x] Lightweight library
-- [x] Uses Google's [Gson Library](https://github.com/google/gson) for json parsing
+- [x] Uses Google's [Gson Library](https://github.com/google/gson) for easier json parsing
 
 # Setup
 ### JAR File
