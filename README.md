@@ -17,7 +17,7 @@
 UpdateChecker checker = UpdateChecker.getInstance(context);
 ```
 ---
-### Set custom json reader
+### Set custom json model
 ```java
 checker.setJsonModel(MyModel.class);
 
