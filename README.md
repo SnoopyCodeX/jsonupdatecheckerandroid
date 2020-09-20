@@ -17,7 +17,7 @@
 UpdateChecker checker = UpdateChecker.getInstance(context);
 ```
 ---
-### Set custom json model
+### Set custom json model (example)
 ```java
 checker.setJsonModel(MyModel.class);
 
@@ -34,6 +34,16 @@ public class MyModel
 	
 	@SerializedName("downloadUrl")
 	String downloadUrl;
+}
+```
+---
+### JSON File to read to (example)
+```json
+{
+  "name": "Test App",
+  "version": "1.2.0",
+  "description": ["My description", "Test description"],
+  "downloadUrl": "https://testurl.com/download"
 }
 ```
 ---
