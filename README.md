@@ -1,4 +1,9 @@
 # JSON-based Update Checker
+[![Developed by SnoopyCodeX](https://img.shields.io/badge/Developed%20by-Waren%20Gonzaga-blue.svg?longCache=true&style=for-the-badge)](https://facebook.com/SnoopyCodeX)
+[![Github Release](https://img.shields.io/github/release/SnoopyCodeX/jsonupdatecheckerandroid.svg?style=for-the-badge)](https://github.com/SnoopyCodeX/jsonupdatecheckerandroid/releases) 
+[![Github Star](https://img.shields.io/github/stars/SnoopyCodeX/jsonupdatecheckerandroid.svg?style=for-the-badge)](https://github.com/SnoopyCodeX/jsonupdatecheckerandroid) 
+[![Github Fork](https://img.shields.io/github/forks/SnoopyCodeX/jsonupdatecheckerandroid.svg?style=for-the-badge)](https://github.com/SnoopyCodeX/jsonupdatecheckerandroid) 
+[![License](https://img.shields.io/github/license/SnoopyCodeX/jsonupdatecheckerandroid.svg?style=for-the-badge)]
 [![DepShield Badge](https://depshield.sonatype.org/badges/SnoopyCodeX/jsonupdatecheckerandroid/depshield.svg)](https://depshield.github.io)
 [![Build Status](https://travis-ci.org/SnoopyCodeX/jsonupdatecheckerandroid.svg?branch=master)](https://travis-ci.org/SnoopyCodeX/jsonupdatecheckerandroid)
 
