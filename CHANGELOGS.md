@@ -1,5 +1,5 @@
 # Changelogs
-Updated as of: Sept. 20, 2020 @ 7:41 PM (GMT+8)
+###### Updated as of: Sept. 20, 2020 @ 7:41 PM (GMT+8)
 ---
 ### v22.0.0 (Sept. 20, 2020)
 - Migrated to [Google's GSON library](https://github.com/google/gson) for easier json parsing
