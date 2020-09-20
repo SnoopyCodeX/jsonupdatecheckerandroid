@@ -1,88 +1,78 @@
-### JSON-based Update Checker
-[![DepShield Badge](https://depshield.sonatype.org/badges/SnoopyCodeX/repository/depshield.svg)](https://depshield.github.io)
-
-> ☑ Customizeable
+# JSON-based Update Checker
+![DepShield Badge](https://depshield.sonatype.org/badges/SnoopyCodeX/repository/depshield.svg)
 ---
-> ☑ Easy to implement
+- [x] Customizeable
+- [x] Easy to implement
+- [x] JSON-based checker
+- [x] Can download app
+- [x] Can auto install app
+- [x] Automatically check for updates
+- [x] Lightweight library
+- [x] Uses Google's [Gson Library](https://github.com/google/gson) for json parsing
 ---
-> ☑ JSON-based checker
+# Setup
 ---
-> ☑ Can download app
----
-> ☑ Can auto install app
----
-> ☑ Automatically check for updates
----
-> ☑ Lightweight library
----
-Setup
----
-> Initialize UpdateChecker
+### Initialize UpdateChecker
 ```java
 UpdateChecker checker = UpdateChecker.getInstance(context);
-
 ```
 ---
-> Set custom json reader
+### Set custom json reader
 ```java
-checker.setJsonReader(new MyCustomJsonReader());
+checker.setJsonModel(MyModel.class);
 
-private class MyCustomJsonReader extends JSONReader
+public class MyModel
 {
-    @Override
-    public NewUpdateInfo readJson(String json) throws Exception
-    {
-       JSONObject job = new JSONObject(json);
-       int vcode = job.getInt("versionCode");
-       String vname = job.getString("versionName");
-       String url = job.getString("downloadUrl");
-       String desc = job.getString("description");
-       
-       return (new NewUpdateInfo(url, desc, vname, vcode));
-    }
+	@SerializedName("description")
+	List<String> description;
+	
+	@SerializedName("name")
+	String name;
+	
+	@SerializedName("version")
+	String version;
+	
+	@SerializedName("downloadUrl")
+	String downloadUrl;
 }
 ```
 ---
-> Enable auto update
+### Enable auto update
 ```java
 checker.shouldAutoRun(true);
 ```
 ---
-> Enable update on both mobile networks
+### Enable update on both mobile networks
 ```java
 checker.shouldCheckUpdateOnWifiOnly(false);
 ```
 ---
-> Enable auto installation
+### Enable auto installation
 ```java
 checker.shouldAutoInstall(true);
 ```
 ---
-> Set the url of the json file
+### Set the url of the json file
 ```java
 checker.setUpdateLogsUrl("https://urlhere");
 ```
 ---
-> Downloading the app
+### Downloading the app
 ```java
 //Returns the filepath of the downloaded app
 UpdateChecker.downloadUpdate("https://urlHere");
 ```
 ---
-> Installing the app manually
+### Installing the app manually
 ```java
 UpdateChecker.installApp(file);
 ```
 ----
-> Add listener
+### Add listener
 ```java
 checker.setOnUpdateDetectedListener(new UpdateChecker.OnUpdateDetectedListener() {
     @Override
-    public void onUpdateDetected(NewUpdateInfo info)
+    public void onUpdateDetected(Object info)
     {}
 });
 ```
----
-Support
-
----

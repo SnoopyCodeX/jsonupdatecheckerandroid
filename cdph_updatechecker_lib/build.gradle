@@ -8,8 +8,8 @@ android {
         applicationId "com.cdph.app"
         minSdkVersion 14
         targetSdkVersion 21
-        versionCode 21
-        versionName "21.1.0w8y20a2"
+        versionCode 22
+        versionName "22.0.0"
     }
     buildTypes {
         release {
@@ -20,5 +20,6 @@ android {
 }
 
 dependencies {
+	compile 'com.google.code.gson:gson:2.8.5'
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }

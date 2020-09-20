@@ -1,73 +1,80 @@
 package com.cdph.updatechecker;
 
-import android.app.*;
-import android.content.*;
-import android.os.*;
-import org.json.*;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.os.Bundle;
+import android.widget.TextView;
+import android.widget.Toast;
+import java.util.List;
 
+import com.google.gson.annotations.SerializedName;
 import com.cdph.app.UpdateChecker;
-import com.cdph.app.UpdateChecker.NewUpdateInfo;
-import com.cdph.app.json.JSONReader;
 
 public class MainActivity extends Activity 
 {
+	private TextView tv;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-		
+
+		tv = findViewById(R.id.mainTextView);
+
 		UpdateChecker.getInstance(this)
-			.setUpdateLogsUrl("https://pastebin.com/raw/e3q1h4iQ")
+			.setUpdateLogsUrl("https://pastebin.com/raw/x9JufEML")
 			.shouldAutoRun(true)
 			.shouldAutoInstall(true)
-			.setJsonReader(new MyCustomJsonReader())
+			.setJsonModel(Model.class)
 			.setOnUpdateDetectedListener(new UpdateChecker.OnUpdateDetectedListener() {
 				@Override
-				public void onUpdateDetected(final UpdateChecker.NewUpdateInfo info)
+				public void onUpdateDetected(Object info)
 				{
-					final AlertDialog dlg = new AlertDialog.Builder(MainActivity.this).create();
-					
-					String msg = "";
-					msg += info.app_version + "\n";
-					msg += info.app_versionName + "\n";
-					msg += info.app_updateUrl + "\n";
-					msg += info.app_description;
-					
-					dlg.setTitle("New Update Detected");
-					dlg.setMessage(msg);
-					dlg.setButton(AlertDialog.BUTTON1, "Update now", new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface di, int btn)
+					try {
+						Model model = (Model) info;
+						String str_curVer = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+						String str_newVer = model.version;
+
+						if(UpdateChecker.compareVersion(str_curVer, str_newVer))
 						{
-							dlg.dismiss();
-							UpdateChecker.downloadUpdate("https://github.com/SnoopyCodeX/binarymatrixandroid/raw/master/binarymatrix_lwp/app/build/bin/app.apk", "cdph_updatechecker_app.apk");
+							String txt = String.format("Name: %s\nVersion: %s\nDownload: %s\nDescription: %s",
+													   model.name,
+													   model.version,
+													   model.downloadUrl,
+													   model.description.get(0)
+													   );
+
+							AlertDialog dlg = new AlertDialog.Builder(MainActivity.this).create();
+							dlg.setCancelable(true);
+							dlg.setCanceledOnTouchOutside(false);
+							dlg.setMessage(txt);
+							dlg.setTitle("Update Available");
+							dlg.show();
 						}
-					});
-					dlg.show();
+						else
+							Toast.makeText(MainActivity.this, "You have the latest version!", Toast.LENGTH_LONG).show(); 
+					} catch(Exception e) {
+						e.printStackTrace();
+					}
 				}
-			});
+			})
+			.runUpdateChecker();
     }
-	
-	private class MyCustomJsonReader extends JSONReader
+
+	public static final class Model 
 	{
-		@Override
-		public NewUpdateInfo readJson(String json) throws Exception
-		{
-			//Parse as jsonObject then get the values
-			JSONObject job = new JSONObject(json);
-			int versionCode = job.getInt("versionCode");
-			String versionName = job.getString("versionName");
-			String downloadUrl = job.getString("url");
-			String description = "";
+		@SerializedName("description")
+		List<String> description;
 
-			//Parse 'description' as jsonArray then get the values
-			JSONArray jar = job.getJSONArray("description");
-			for(int i = 0; i < jar.length(); i++)
-				description += jar.getString(i) + "\n";	
-			description = description.substring(0, description.length()-1);
+		@SerializedName("version")
+		String version;
 
-			return (new NewUpdateInfo(downloadUrl, versionName, description, versionCode));
-		}
+		@SerializedName("name")
+		String name;
+
+		@SerializedName("downloadUrl")
+		String downloadUrl;
 	}
 }

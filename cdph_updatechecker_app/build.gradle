@@ -21,5 +21,6 @@ android {
 
 dependencies {
 	compile project(':cdph_updatechecker_lib')
+	compile 'com.google.code.gson:gson:2.8.5'
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }

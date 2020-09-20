@@ -28,15 +28,19 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.NumberFormat;
+import java.util.HashMap;
 
-import com.cdph.app.json.JSONReader;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public final class UpdateChecker
 {
 	private static OnUpdateDetectedListener listener;
 	private static String updateLogUrl = "";
-	private static boolean autoRun = false, autoInstall = false, updateOnWifiOnly = true;
-	private static JSONReader jsonReader;
+	private static boolean autoRun = false, 
+						   autoInstall = false, 
+						   updateOnWifiOnly = true;
+	private static Class<?> jsonModel;
 	private static Context ctx;
 	
 	/*
@@ -133,14 +137,14 @@ public final class UpdateChecker
 	}
 	
 	/*
-	* Sets a custom json reader to suit your needs
+	* Sets a custom json model to suit your needs
 	*
-	*@param  jsonReader           - A custom class that extends {com.cdph.app.json.JSONReader}
+	*@param  jsonModel           - A model class that will contain the update info
 	*@return UpdateChecker.class
 	*/
-	public <T extends JSONReader> UpdateChecker setJsonReader(T jsonReader)
+	public UpdateChecker setJsonModel(Class<?> jsonModel)
 	{
-		this.jsonReader = jsonReader;
+		this.jsonModel = jsonModel;
 		return this;
 	}
 	
@@ -155,7 +159,7 @@ public final class UpdateChecker
 			if(ConnectivityReceiver.isConnected(ctx))
 				(new TaskUpdateChecker()).execute(updateLogUrl);
 			else
-				Toast.makeText(ctx, String.format("[ERROR (runUpdateChecker)]: %s", "You are not connected to a wifi network"), Toast.LENGTH_LONG).show();
+				Toast.makeText(ctx, "You are not connected to an active network", Toast.LENGTH_LONG).show();
 		} catch(Exception e) {
 			e.printStackTrace();
 			Toast.makeText(ctx, String.format("[ERROR (runUpdateChecker)]: %s", e.getMessage()), Toast.LENGTH_LONG).show();
@@ -168,7 +172,7 @@ public final class UpdateChecker
 	*@param	  filePath  - The path of the apk to be installed
 	*@return  null
 	*/
-	public static void installApp(String path, String mimeType)
+	public static void installApp(String path)
 	{
 		try {
 			Uri uri = Uri.parse("file://" + path);
@@ -208,40 +212,88 @@ public final class UpdateChecker
 		return file;
 	}
 	
+	/*
+	* Checks and formats version into a 
+	* proper semantic versioning format
+	*
+	*@param  version  -  The string version (xx.xx.xx | [major].[minor].[patch])
+	*/
+	public static HashMap<String, Integer> toSemanticVersioning(String version)
+	{
+		HashMap<String, Integer> semanticVer = new HashMap<>();
+		version = version.replaceAll("[a-zA-Z\\-]+", "");
+		
+		if(version.matches("\\d+\\.\\d+\\.\\d+"))
+		{
+			String[] vers = version.split("[.]");
+			semanticVer.put("major", Integer.parseInt(vers[0]));
+			semanticVer.put("minor", Integer.parseInt(vers[1]));
+			semanticVer.put("patch", Integer.parseInt(vers[2]));
+		}
+		
+		if(version.matches("\\d+\\.\\d+"))
+		{
+			String[] vers = version.split("[.]");
+			semanticVer.put("major", Integer.parseInt(vers[0]));
+			semanticVer.put("minor", Integer.parseInt(vers[1]));
+			semanticVer.put("patch", 0);
+		}
+		
+		if(version.matches("\\d+"))
+		{
+			semanticVer.put("major", Integer.parseInt(version));
+			semanticVer.put("minor", 0);
+			semanticVer.put("patch", 0);
+		}
+		
+		return semanticVer;
+	}
+	
+	/*
+	* Compares version1 to version2,
+	* returns true if version1 is greater than
+	* version2.
+	*
+	*@param  version1  -  String version1
+	*@param  version2  -  String version2
+	*@return  boolean
+	*/
+	public static boolean compareVersion(String version1, String version2)
+	{
+		HashMap<String, Integer> curVer = UpdateChecker.toSemanticVersioning(version1);
+		HashMap<String, Integer> newVer = UpdateChecker.toSemanticVersioning(version2);
+
+		int cmaj = curVer.get("major"),
+			cmin = curVer.get("minor"),
+			cpat = curVer.get("patch");
+
+		int nmaj = newVer.get("major"),
+			nmin = newVer.get("minor"),
+			npat = newVer.get("patch");
+		
+		return ((cmaj < nmaj) || (cmin < nmin) || (cpat < npat));
+	}
+	
 	public static interface OnUpdateDetectedListener
 	{
-		public void onUpdateDetected(NewUpdateInfo info)
+		public void onUpdateDetected(Object info)
 	}
 	
-	public static class NewUpdateInfo
-	{
-		public int app_version;
-		public String app_updateUrl;
-		public String app_versionName;
-		public String app_description;
-		
-		public NewUpdateInfo(String url, String versionName, String description, int version)
-		{
-			this.app_version = version;
-			this.app_versionName = versionName;
-			this.app_updateUrl = url;
-			this.app_description = description;
-		}
-	}
-	
-	private static class TaskUpdateChecker extends AsyncTask<String, Void, NewUpdateInfo>
+	private static class TaskUpdateChecker extends AsyncTask<String, Void, String>
 	{
 		private static final int CONNECT_TIMEOUT = 6000;
 		private static final int READ_TIMEOUT = 3000;
 		
+		private Gson gson;
 		private ProgressDialog dlg;
-		private String errMsg;
+		private String errMsg = "";
 		
 		@Override
 		protected void onPreExecute()
 		{
 			super.onPreExecute();
 			
+			gson = new GsonBuilder().create();
 			dlg = new ProgressDialog(ctx);
 			dlg.setCancelable(false);
 			dlg.setCanceledOnTouchOutside(false);
@@ -252,10 +304,8 @@ public final class UpdateChecker
 		}
 		
 		@Override
-		protected NewUpdateInfo doInBackground(String... params)
+		protected String doInBackground(String... params)
 		{
-			NewUpdateInfo info = null;
-			
 			try {
 				String str_url = params[0];
 				URL url = new URL(str_url);
@@ -278,8 +328,7 @@ public final class UpdateChecker
 						json += new String(buffer, 0, len);
 					is.close();
 					
-					//Read json
-					info = jsonReader.readJson(json);
+					return json;
 				}
 				
 				conn.disconnect();
@@ -288,11 +337,11 @@ public final class UpdateChecker
 				errMsg += e.getMessage();
 			}
 			
-			return info;
+			return null;
 		}
 		
 		@Override
-		protected void onPostExecute(NewUpdateInfo result)
+		protected void onPostExecute(String result)
 		{
 			super.onPostExecute(result);
 			
@@ -300,13 +349,11 @@ public final class UpdateChecker
 				if(dlg != null)
 					dlg.dismiss();
 				
-				if(listener != null && errMsg == null)
-					if(ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), 0).versionCode < result.app_version)
-						listener.onUpdateDetected(result);
-					else
-						Toast.makeText(ctx, "You have the latest version!", Toast.LENGTH_LONG).show();
+				if(listener != null && errMsg.isEmpty())
+					listener.onUpdateDetected(gson.fromJson(result, jsonModel));
 				else
 					Toast.makeText(ctx, String.format("[ERROR]: %s", errMsg), Toast.LENGTH_LONG).show();
+			
 			} catch(Exception e) {
 				e.printStackTrace();
 				Toast.makeText(ctx, String.format("[ERROR (task_updatechecker)]: %s", e.getMessage()), Toast.LENGTH_LONG).show();
@@ -317,7 +364,7 @@ public final class UpdateChecker
 	private static final class TaskDownloadUpdate extends AsyncTask<String, Void, File>
 	{
 		private ProgressDialog dlg;
-		private String errMsg, mimeType;
+		private String errMsg;
 		
 		@Override
 		protected void onPreExecute()
@@ -366,14 +413,23 @@ public final class UpdateChecker
 					cursor.moveToFirst();
 					
 					int status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
+					int curr = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
+					int maxx = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+					int prog = (maxx / curr);
+					dlg.setProgress(prog);
+					
+					if(prog < 100)
+						dlg.setMessage(String.format("Downloading... (%d%)", prog));
+					else
+						dlg.setMessage("Download finished...");
+					
 					if(status == DownloadManager.STATUS_SUCCESSFUL)
 					{
 						String filePath = cursor.getString(cursor.getColumnIndex("local_uri"));
 						file = new File(filePath);
 						
-						mimeType = dm.getMimeTypeForDownloadedFile(id);
 						if(autoInstall && errMsg == null)
-							installApp(filePath, mimeType);
+							installApp(filePath);
 						
 						downloading = false;
 					}
