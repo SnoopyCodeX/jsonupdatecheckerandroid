@@ -1,5 +1,6 @@
 # JSON-based Update Checker
 [![DepShield Badge](https://depshield.sonatype.org/badges/SnoopyCodeX/jsonupdatecheckerandroid/depshield.svg)](https://depshield.github.io)
+[![Build Status](https://travis-ci.org/SnoopyCodeX/jsonupdatecheckerandroid.svg?branch=master)](https://travis-ci.org/SnoopyCodeX/jsonupdatecheckerandroid)
 
 - [x] Customizeable
 - [x] Easy to implement
