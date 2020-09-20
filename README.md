@@ -14,9 +14,6 @@
 ### JAR File
 - Add this jar file to your app's libs directory
 - [UpdateChecker - v22.0.0](https://raw.githubusercontent.com/SnoopyCodeX/jsonupdatecheckerandroid/master/Jar/v22.0.0-UpdateChecker.jar)
-```groovy
-compile fileTree(dir: 'libs', include: ['*.jar'])
-```
 ---
 ### Initialize UpdateChecker
 ```java

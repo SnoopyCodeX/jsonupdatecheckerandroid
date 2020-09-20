@@ -40,6 +40,7 @@ public final class UpdateChecker
 	private static boolean autoRun = false, 
 						   autoInstall = false, 
 						   updateOnWifiOnly = true;
+	
 	private static Class<?> jsonModel;
 	private static Context ctx;
 	
@@ -415,11 +416,11 @@ public final class UpdateChecker
 					int status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
 					int curr = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
 					int maxx = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
-					int prog = (maxx / curr);
+					int prog = (curr > 0) ? (maxx / curr) : 0;
 					dlg.setProgress(prog);
 					
 					if(prog < 100)
-						dlg.setMessage(String.format("Downloading... (%d%)", prog));
+						dlg.setMessage(String.format("Downloading... (%s)", prog + "%"));
 					else
 						dlg.setMessage("Download finished...");
 					

@@ -23,10 +23,11 @@ public class MainActivity extends Activity
 
 		tv = findViewById(R.id.mainTextView);
 
+		
 		UpdateChecker.getInstance(this)
 			.setUpdateLogsUrl("https://pastebin.com/raw/x9JufEML")
-			.shouldAutoRun(true)
-			.shouldAutoInstall(true)
+			.shouldAutoRun(false)
+			.shouldAutoInstall(false)
 			.setJsonModel(Model.class)
 			.setOnUpdateDetectedListener(new UpdateChecker.OnUpdateDetectedListener() {
 				@Override
@@ -59,8 +60,7 @@ public class MainActivity extends Activity
 						e.printStackTrace();
 					}
 				}
-			})
-			.runUpdateChecker();
+			});
     }
 
 	public static final class Model 
