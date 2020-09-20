@@ -9,9 +9,9 @@
 - [x] Automatically check for updates
 - [x] Lightweight library
 - [x] Uses Google's [Gson Library](https://github.com/google/gson) for json parsing
----
+
 # Setup
----
+
 ### Initialize UpdateChecker
 ```java
 UpdateChecker checker = UpdateChecker.getInstance(context);
