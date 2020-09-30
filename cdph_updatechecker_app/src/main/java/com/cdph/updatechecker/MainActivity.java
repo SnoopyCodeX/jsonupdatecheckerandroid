@@ -13,7 +13,7 @@ import com.cdph.app.UpdateChecker;
 
 public class MainActivity extends Activity 
 {
-	private TextView tv;
+    private TextView tv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -26,7 +26,7 @@ public class MainActivity extends Activity
 		
 		UpdateChecker.getInstance(this)
 			.setUpdateLogsUrl("https://pastebin.com/raw/x9JufEML")
-			.shouldAutoRun(false)
+			.shouldAutoRun(true)
 			.shouldAutoInstall(false)
 			.setJsonModel(Model.class)
 			.setOnUpdateDetectedListener(new UpdateChecker.OnUpdateDetectedListener() {
