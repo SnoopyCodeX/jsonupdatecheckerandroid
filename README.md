@@ -22,9 +22,9 @@
 ```
 git clone https://github.com/SnoopyCodeX/jsonupdatecheckerandroid
 ```
-- After cloning, copy the folder named `cdph_jsonupdatechecker_lib' to your project's directory then include it in your app level build.gradle
+- After cloning, copy the folder named ```cdph_jsonupdatechecker_lib``` to your project's directory then include it in your app level build.gradle
 ```groovy
-compile project(':cdph_jsonupdatechecker_lib')
+compile project(':cdph_updatechecker_lib')
 ```
 ### JAR File (Unstable)
 - Add this jar file to your app's libs directory
