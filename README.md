@@ -17,10 +17,20 @@
 - [x] Uses Google's [Gson Library](https://github.com/google/gson) for easier json parsing
 
 # Setup
-### JAR File
+### Clone this repo
+- Clone this repo to your device
+```
+git clone https://github.com/SnoopyCodeX/jsonupdatecheckerandroid
+```
+- After cloning, copy the folder named `cdph_jsonupdatechecker_lib' to your project's directory then include it in your app level build.gradle
+```groovy
+compile project(':cdph_jsonupdatechecker_lib')
+```
+### JAR File (Unstable)
 - Add this jar file to your app's libs directory
-- [UpdateChecker - v22.0.0](https://raw.githubusercontent.com/SnoopyCodeX/jsonupdatecheckerandroid/master/Jar/v22.0.0-UpdateChecker.jar)
+- (Unstable) [UpdateChecker - v22.0.0](https://raw.githubusercontent.com/SnoopyCodeX/jsonupdatecheckerandroid/master/Jar/v22.0.0-UpdateChecker.jar)
 ---
+# Usage
 ### Initialize UpdateChecker
 ```java
 UpdateChecker checker = UpdateChecker.getInstance(context);
@@ -79,7 +89,7 @@ checker.setUpdateLogsUrl("https://urlhere");
 ### Downloading the app
 ```java
 //Returns the filepath of the downloaded app
-UpdateChecker.downloadUpdate("https://urlHere");
+UpdateChecker.downloadUpdate("https://urlHere", "filename.apk");
 ```
 ---
 ### Installing the app manually
