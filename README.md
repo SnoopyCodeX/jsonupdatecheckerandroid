@@ -105,3 +105,45 @@ checker.setOnUpdateDetectedListener(new UpdateChecker.OnUpdateDetectedListener()
     {}
 });
 ```
+
+### Demo Usage
+```java
+UpdateChecker.getInstance(this)
+	.setUpdateLogsUrl("https://pastebin.com/raw/x9JufEML")
+	.shouldAutoRun(true)
+	.shouldAutoInstall(false)
+	.setJsonModel(Model.class)
+	.setOnUpdateDetectedListener(new UpdateChecker.OnUpdateDetectedListener() {
+		@Override
+		public void onUpdateDetected(Object info)
+		{
+			try {
+				Model model = (Model) info;
+				String str_curVer = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+				String str_newVer = model.version;
+
+				// Check if the current version is lower than the new update version
+				if(UpdateChecker.compareVersion(str_curVer, str_newVer))
+				{
+					String txt = String.format("Name: %s\nVersion: %s\nDownload: %s\nDescription: %s",
+											   model.name,
+											   model.version,
+											   model.downloadUrl,
+											   model.description.get(0)
+											   );
+	
+					AlertDialog dlg = new AlertDialog.Builder(MainActivity.this).create();
+					dlg.setCancelable(true);
+					dlg.setCanceledOnTouchOutside(false);
+					dlg.setMessage(txt);
+					dlg.setTitle("Update Available");
+					dlg.show();
+				}
+				else
+					Toast.makeText(MainActivity.this, "You have the latest version!", Toast.LENGTH_LONG).show(); 
+			} catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
+	});
+```
